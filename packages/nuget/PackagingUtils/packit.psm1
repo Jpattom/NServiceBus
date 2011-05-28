@@ -131,16 +131,6 @@ function Invoke-Packit
 		$nuGetSpecContent.package.metadata.description = $script:packit.package_description
 		$nuGetSpecContent.package.metadata.tags = $script:packit.package_tags
 		$nuGetSpecContent.package.metadata.iconUrl = $script:packit.package_iconUrl;
-#		if($nuGetSpecContent.package.metadata.language -eq $null)
-#		{
-#			$refNode = $nuGetSpecContent.package.metadata | Select-Object -Property "description"
-#			$parentNode = $nuGetSpecContent.package | Select-Object -Property "metadata"
-#			$languageNode = $parentNode.CreateElement("language");
-#			$parentNode.insertAfter($languageNode, $refNode)
-#			#$nuGetSpecContent.package.metadata.CreateElement("language");
-#			
-#		}
-#		$nuGetSpecContent.package.metadata.language = $script:packit.package_language
 		$dependencyInnerXml = ""
 		if($dependencies.Count -gt 0)
 		{
@@ -161,7 +151,16 @@ function Invoke-Packit
 			}
 	       $nuGetSpecContent.package.metadata.dependencies.set_InnerXML($dependencyInnerXml)
 		}				 
-		Set-Content $nuGetSpecFile $nuGetSpecContent.get_OuterXML()				
+		$writerSettings = new-object System.Xml.XmlWriterSettings
+  		$writerSettings.OmitXmlDeclaration = $true
+  		$writerSettings.NewLineOnAttributes = $true
+ 		$writerSettings.Indent = $true
+		$nuGetSpecFilePath = Resolve-Path -Path $nuGetSpecFile
+  		$writer = [System.Xml.XmlWriter]::Create($nuGetSpecFilePath, $writerSettings)
+
+  		$nuGetSpecContent.WriteTo($writer)
+ 		$writer.Flush()
+  		$writer.Close()
 		 if($assemblyNames.Count -gt 0)
 		 {
 			 $libPath = $packageDir + "\lib"
@@ -194,14 +193,8 @@ function Invoke-Packit
 		 $packName = "{0}.{1}.nupkg" -f
 		 $packageName, $version 
 		 
-#		 $relativePath = $script:packit.packageOutPutDir + "\" + $packageName
-#		 if(Test-Path $relativePath)
-#		 {
-#		 	Remove-Item $relativePath
-#		 }
 		 Move-Item $packName $script:packit.packageOutPutDir -Force
-		 PuchPackage($packName)
-		 
+		 if($script:packit.push_to_nuget){ PuchPackage($packName) }
 	}
 	end
 	{
