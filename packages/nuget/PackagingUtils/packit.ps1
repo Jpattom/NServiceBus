@@ -1,13 +1,7 @@
-$nugetAvailable = Get-Command Nuget 
 if(Test-Path ./RunOnce.ps1)
 {
 	./RunOnce.ps1
 	Write-Host "Please restart and execute me a again"
-}
-elseif($nugetAvailable -eq $null)
-{
-	Write-Host "Nuget Not Available......."
-	Write-Host "Please Copy the nuget.exe to any folder in [env]path and execute me again"	
 }
 else
 {
