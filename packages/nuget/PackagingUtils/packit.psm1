@@ -15,6 +15,7 @@ $script:packit.package_iconUrl = "http://images.nservicebus.com/nServiceBus_Logo
 $script:packit.build_Location = "..\..\..\Build"
 $script:packit.versionAssemblyName = $script:packit.build_Location + "\nservicebus\NServiceBus.dll"
 $script:packit.packageOutPutDir = ".\packages"
+$script:packit.nugetCommand = "..\..\..\tools\Nuget\NuGet.exe"
 
 Export-ModuleMember -Variable "packit"
 
@@ -55,7 +56,7 @@ $packagespath = resolve-path $script:packit.packageOutPutDir
     $packages | % { 
         $package = $_.Name
         write-host "Uploading $package"
-#        NuGet push -source "http://packages.nuget.org/v1/" $package $key
+#        &$script:packit.nugetCommand  push -source "http://packages.nuget.org/v1/" $package $key
         write-host ""
     }
   }
@@ -118,7 +119,7 @@ function Invoke-Packit
 		}
 		mkdir $packageDir 
 		$packagePath = $packageDir + "\" + $packageName
-		NuGet spec $packagePath
+		&$script:packit.nugetCommand  spec $packagePath
 		$nuGetSpecFile = $packagePath + ".nuspec"
 		[xml] $nuGetSpecContent= Get-Content $nuGetSpecFile
 		$nuGetSpecContent.package.metadata.Id = $packageName
@@ -184,7 +185,7 @@ function Invoke-Packit
 			 $packageToolsPath += "\*.*"
 			 copy $packageToolsPath $toolsPath
 		 }		 
-		 NuGet pack $nuGetSpecFile 
+		 &$script:packit.nugetCommand  pack $nuGetSpecFile 
 		 
 		 if((Test-Path -Path $script:packit.packageOutPutDir) -ne $true)
 		 {

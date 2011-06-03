@@ -12,7 +12,8 @@ elseif($nugetAvailable -eq $null)
 else
 {
 	import-module ./packit.psm1
-	$script:packit.push_to_nuget = $true 
+	Write-Output "Loding the moduele for packing.............."
+	$packit.push_to_nuget = $true 
 	invoke-packit "NServiceBus.Host" "" @{NServiceBus="<version>"}
 	remove-module packit
 }
