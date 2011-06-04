@@ -4,7 +4,7 @@ $script:packit.push_to_nuget = $false      # Set the variable to true to push th
 $script:packit.default_package = "NServiceBus"
 $script:packit.package_owners = "Udi Dahan, Andreas Ohlund, Matt Burton, Jonathan Oliver et al"
 $script:packit.package_authors = "Udi Dahan, Andreas Ohlund, Matt Burton, Jonathan Oliver et al"
-$script:packit.package_description = "The hosting template for the nservicebusThe most popular open-source service bus for .net"
+$script:packit.package_description = "The most popular open-source service bus for .net"
 $script:packit.package_language = "en-US"
 $script:packit.package_licenseUrl = "http://nservicebus.com/license.aspx"
 $script:packit.package_projectUrl = "http://nservicebus.com/"
@@ -12,10 +12,13 @@ $script:packit.package_requireLicenseAcceptance = $true;
 $script:packit.package_tags = "nservicebus servicebus msmq cqrs publish subscribe"
 $script:packit.package_version = "2.5"
 $script:packit.package_iconUrl = "http://images.nservicebus.com/nServiceBus_Logo.png"
-$script:packit.build_Location = "..\..\..\Build"
-$script:packit.versionAssemblyName = $script:packit.build_Location + "\nservicebus\NServiceBus.dll"
+$script:packit.binaries_Location = "..\..\..\binaries"
+$script:packit.framework_Isolated_Binaries_Loc = "..\..\..\build\lib"
+$script:packit.targeted_Frameworks = "net35","net40"
+$script:packit.versionAssemblyName = $script:packit.binaries_Location + "\NServiceBus.dll"
 $script:packit.packageOutPutDir = ".\packages"
 $script:packit.nugetCommand = "..\..\..\tools\Nuget\NuGet.exe"
+
 
 Export-ModuleMember -Variable "packit"
 
@@ -81,7 +84,7 @@ function Invoke-Packit
 			 [Parameter(Position=2,Mandatory=0)]
     		 [System.Collections.Hashtable]$dependencies = @{},
 			 [Parameter(Position=3, Mandatory=0)]
-			 [System.Collections.ArrayList]$assemblyNames = @{}
+			 [System.Collections.ArrayList]$assemblyNames  
   		)
 		
 	begin
@@ -166,8 +169,21 @@ function Invoke-Packit
 		 {
 			 $libPath = $packageDir + "\lib"
 			 mkdir $libPath
-			 <#	 Logic Copy the assemblies to lib to support both 4.0 and 3.5 framework#>
-			 
+		 	 foreach ($assemblyName in $assemblyNames)
+			 {
+				 foreach($framework in $script:packit.targeted_Frameworks)
+				 {
+				 	$source = $script:packit.framework_Isolated_Binaries_Loc + "\" + $framework + "\" + $assemblyName
+					$destination =  $libPath + "\" + $framework +"\"
+					$directoryName  = [system.io.Path]::GetDirectoryName($assemblyName)
+					if($directoryName -ne "")
+					{
+						$destination +=  $directoryName + "\"
+						
+					}
+				 	XCopy $source $destination /S /Y 
+				 }			 
+			}			 
 		 }
 		 $packageContentPath = ".\Content" + $packageName
 		 if(Test-Path $packageContentPath)
