@@ -28,6 +28,7 @@
       <!--<add Messages="Messages" Endpoint="messagebus" />-->
     </MessageEndpointMappings>
   </UnicastBusConfig>
-
-  
-</configuration>
+  <appSettings>
+    <add key="EndpointConfigurationType" value="$rootnamespace$.EndpointConfig, $assemblyname$"/>
+  </appSettings>
+ </configuration>

@@ -1,6 +1,7 @@
 #-- Public Module Variables -- 
 $script:packit = @{}
 $script:packit.push_to_nuget = $false      # Set the variable to true to push the package to NuGet galary.
+
 $script:packit.default_package = "NServiceBus"
 $script:packit.package_owners = "Udi Dahan, Andreas Ohlund, Matt Burton, Jonathan Oliver et al"
 $script:packit.package_authors = "Udi Dahan, Andreas Ohlund, Matt Burton, Jonathan Oliver et al"
@@ -18,6 +19,7 @@ $script:packit.targeted_Frameworks = "net35","net40"
 $script:packit.versionAssemblyName = $script:packit.binaries_Location + "\NServiceBus.dll"
 $script:packit.packageOutPutDir = ".\packages"
 $script:packit.nugetCommand = "..\..\..\tools\Nuget\NuGet.exe"
+$script:packit.nugetKey = "..\..\..\tools\Nuget\NuGetKey.txt"
 
 
 Export-ModuleMember -Variable "packit"
@@ -26,7 +28,7 @@ $VesionPlaceHolder = "<version>"
 
 function PuchPackage($packageName)
 {
-$keyfile = ""
+$keyfile = $script:packit.nugetKey
 $packagespath = resolve-path $script:packit.packageOutPutDir
  
 #if(-not (test-path $keyfile)) {
@@ -194,7 +196,7 @@ function Invoke-Packit
 			 copy $packageContentPath $contentPath
 		 }
 		 $packageToolsPath = ".\Tools" + $packageName
-		 if(Test-Path $packageContentPath)
+		 if(Test-Path $packageToolsPath)
 		 {
 			 $toolsPath = $packageDir + "\tools"
 			 mkdir $toolsPath
