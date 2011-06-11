@@ -183,6 +183,7 @@ function Invoke-Packit
 						$destination +=  $directoryName + "\"
 						
 					}
+					#Using Xcopy to copy everything including directory structure
 				 	XCopy $source $destination /S /Y 
 				 }			 
 			}			 
