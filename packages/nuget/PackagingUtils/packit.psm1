@@ -1,4 +1,4 @@
-#-- Public Module Variables -- 
+#region Public Module Variables  
 $script:packit = @{}
 $script:packit.push_to_nuget = $false      # Set the variable to true to push the package to NuGet galary.
 
@@ -19,55 +19,45 @@ $script:packit.targeted_Frameworks = "net35","net40"
 $script:packit.versionAssemblyName = $script:packit.binaries_Location + "\NServiceBus.dll"
 $script:packit.packageOutPutDir = ".\packages"
 $script:packit.nugetCommand = "..\..\..\tools\Nuget\NuGet.exe"
-$script:packit.nugetKey = "..\..\..\tools\Nuget\NuGetKey.txt"
-
+$script:packit.nugetKey =     "..\..\..\tools\Nuget\NuGetKey.txt"
 
 Export-ModuleMember -Variable "packit"
+#endregion
 
 $VesionPlaceHolder = "<version>"
 
-function PuchPackage($packageName)
+function PushPackage($packageName)
 {
-$keyfile = $script:packit.nugetKey
-$packagespath = resolve-path $script:packit.packageOutPutDir
+	$keyfile = resolve-path $script:packit.nugetKey
+	$packagespath = resolve-path $script:packit.packageOutPutDir
+	$nugetExcec =  resolve-path $script:packit.nugetCommand
+	if(-not (test-path $keyfile)) 
+	{
+  		throw "Could not find the NuGet access key at $keyfile."
+	}
+  	pushd $packagespath
  
-#if(-not (test-path $keyfile)) {
-#  throw "Could not find the NuGet access key at $keyfile. If you're not Jeremy, you shouldn't be running this script!"
-#}
-#else {
-  pushd $packagespath
+  	# get our secret key.
+  	$key = get-content $keyfile
+	$key = $key.Trim()
  
-  # get our secret key.
-#  $key = get-content $keyfile
+  	# Find all the packages and display them for confirmation
+  	$packages = dir $packageName
+  	write-host "Packages to upload:"
+  	$packages | % { write-host $_.Name }
  
-  # Find all the packages and display them for confirmation
-  $packages = dir $packageName
-  write-host "Packages to upload:"
-  $packages | % { write-host $_.Name }
- 
-  # Ensure we haven't run this by accident.
-  $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "Uploads the packages."
-  $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", "Does not upload the packages."
-  $options = [System.Management.Automation.Host.ChoiceDescription[]]($no, $yes)
- 
-  $result = $host.ui.PromptForChoice("Upload packages", "Do you want to upload the NuGet packages to the NuGet server?", $options, 0) 
- 
-  # Cancelled
-  if($result -eq 0) {
-    "Upload aborted"
-  }
-  # upload
-  elseif($result -eq 1) {
+  	#Ensure we haven't run this by accident.
+  	$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "Uploads the packages."
+  	$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", "Does not upload the packages."
+  	$options = [System.Management.Automation.Host.ChoiceDescription[]]($no, $yes)
     $packages | % { 
         $package = $_.Name
         write-host "Uploading $package"
-#        &$script:packit.nugetCommand  push -source "http://packages.nuget.org/v1/" $package $key
-        write-host ""
-    }
-  }
+        &$nugetExcec  push -source "http://packages.nuget.org/v1/" $package $key
+        write-host ""    
+  	}
   popd
 }
-#}
 
 function Invoke-Packit
 {
@@ -214,7 +204,7 @@ function Invoke-Packit
 		 $packageName, $version 
 		 
 		 Move-Item $packName $script:packit.packageOutPutDir -Force
-		 if($script:packit.push_to_nuget){ PuchPackage($packName) }
+		 if($script:packit.push_to_nuget){ PushPackage($packName) }
 	}
 	end
 	{
