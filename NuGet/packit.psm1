@@ -18,6 +18,7 @@ $script:packit.framework_Isolated_Binaries_Loc = ".\build\lib"
 $script:packit.targeted_Frameworks = "net35","net40"
 $script:packit.versionAssemblyName = $script:packit.binaries_Location + "\NServiceBus.dll"
 $script:packit.packageOutPutDir = ".\packages"
+$script:packit.PackagingArtefactsRoot = ".\NuGet\PackagingArtefacts"
 $script:packit.nugetCommand = ".\tools\Nuget\NuGet.exe"
 $script:packit.nugetKey =     ".\tools\Nuget\NuGetKey.txt"
 
@@ -111,14 +112,20 @@ function Invoke-Packit
 		 	mkdir $script:packit.packageOutPutDir
 		 }
 		 
-		$packageDir = $script:packit.packageOutPutDir + "\" + $packageName
-		if(Test-Path $packageDir)
+		$packageDir = $script:packit.PackagingArtefactsRoot + "\" + $packageName
+		if((Test-Path -Path $script:packit.PackagingArtefactsRoot) -ne $true)
 		{
-			Remove-Item $packageDir -Recurse
+			mkdir $script:packit.PackagingArtefactsRoot
 		}
-		mkdir $packageDir 
+		
+		if((Test-Path -Path $packageDir) -ne $true)
+		{
+			mkdir $packageDir
+		}
+		
+		
 		$packagePath = $packageDir + "\" + $packageName
-		&$script:packit.nugetCommand  spec $packagePath
+		&$script:packit.nugetCommand  spec $packagePath -Force
 		$nuGetSpecFile = $packagePath + ".nuspec"
 		[xml] $nuGetSpecContent= Get-Content $nuGetSpecFile
 		$nuGetSpecContent.package.metadata.Id = $packageName
@@ -199,7 +206,7 @@ function Invoke-Packit
 			 copy $packageToolsPath $toolsPath
 		 }		 
 		 
-		 &$script:packit.nugetCommand  pack $nuGetSpecFile -OutputDirectory $packageDir -Verbose
+		 &$script:packit.nugetCommand  pack $nuGetSpecFile -OutputDirectory $script:packit.packageOutPutDir -Verbose
 		 
 		 if($script:packit.push_to_nuget){ PushPackage($packName) }
 	}
