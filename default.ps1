@@ -1,29 +1,26 @@
 task default -depends CreatePackage
 
 task CreatePackage -depends  BuildOnNet35, BuildOnNet40  {
-
-	cd .\packages\nuget\PackagingUtils
-	import-module ./packit.psm1
+	import-module ./NuGet\packit.psm1
 	Write-Output "Loding the moduele for packing.............."
-	$packit.push_to_nuget = $false 
+	$packit.push_to_nuget = $true 
 	
-	#region packing NserviceBus
+	#region Packing NserviceBus
 	$packit.package_description = "The most popular open-source service bus for .net"
 	invoke-packit "NServiceBus" "" @{log4net="1.2.10"} "NServiceBus.dll", "NServiceBus.Core.dll"
 	#endregion
 	
-	#region packing NServiceBus.Host
+	#region Packing NServiceBus.Host
 	$packit.package_description = "The hosting template for the nservicebus, The most popular open-source service bus for .net"
 	invoke-packit "NServiceBus.Host" "" @{NServiceBus="<version>"} "NServiceBus.Host.exe" 
 	#endregion
 	
-	#region NServiceBus.Testing
+	#region Packing NServiceBus.Testing
 	$packit.package_description = "The testing for the nservicebus, The most popular open-source service bus for .net"
 	invoke-packit "NServiceBus.Testing" "" @{NServiceBus="<version>"} "NServiceBus.Testing.dll"
 	#endregion
 	
 	remove-module packit
-	cd ..\..\..\
  }
  
  
