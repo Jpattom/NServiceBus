@@ -20,6 +20,16 @@ task CreatePackage -depends  BuildOnNet35, BuildOnNet40  {
 	invoke-packit "NServiceBus.Testing" "" @{NServiceBus="<version>"} "NServiceBus.Testing.dll"
 	#endregion
 	
+	#region Packing NServiceBus.Tools
+	$packit.package_description = "The tools for configure the nservicebus, The most popular open-source service bus for .net"
+	invoke-packit "NServiceBus.Tools" "" 
+	#endregion
+	
+	#region Packing NServiceBus.ObjectBuilder.Autofac2
+	$packit.package_description = "The Autofac Container for the nservicebus, The most popular open-source service bus for .net"
+	invoke-packit "NServiceBus.ObjectBuilder.Autofac2" "" @{Autofac="2.3.2.632"} "containers\autofac\NServiceBus.ObjectBuilder.Autofac.dll"
+	#endregion
+	
 	remove-module packit
  }
  

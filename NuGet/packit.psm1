@@ -157,38 +157,34 @@ function Invoke-Packit
     		}
 			}
 	       $nuGetSpecContent.package.metadata.dependencies.set_InnerXML($dependencyInnerXml)
-		}				 
-		$writerSettings = new-object System.Xml.XmlWriterSettings
-  		$writerSettings.OmitXmlDeclaration = $true
-  		$writerSettings.NewLineOnAttributes = $true
- 		$writerSettings.Indent = $true
-		$nuGetSpecFilePath = Resolve-Path -Path $nuGetSpecFile
-  		$writer = [System.Xml.XmlWriter]::Create($nuGetSpecFilePath, $writerSettings)
-
-  		$nuGetSpecContent.WriteTo($writer)
- 		$writer.Flush()
-  		$writer.Close()
+		}
+		else
+		{
+			$nuGetSpecContent.package.metadata.RemoveChild($nuGetSpecContent.package.metadata.dependencies)
+		}
+		$filesNode = $nuGetSpecContent.CreateElement("files") 
+		$fileElement = ""
 		 if($assemblyNames.Count -gt 0)
 		 {
-			 $libPath = $packageDir + "\lib"
-			 mkdir $libPath
+			 $libPath = "\lib"
 		 	 foreach ($assemblyName in $assemblyNames)
 			 {
 				 foreach($framework in $script:packit.targeted_Frameworks)
 				 {
 				 	$source = $script:packit.framework_Isolated_Binaries_Loc + "\" + $framework + "\" + $assemblyName
+					$source = Resolve-Path $source
 					$destination =  $libPath + "\" + $framework +"\"
 					$directoryName  = [system.io.Path]::GetDirectoryName($assemblyName)
 					if($directoryName -ne "")
 					{
 						$destination +=  $directoryName + "\"
-						
 					}
-					#Using Xcopy to copy everything including directory structure
-				 	XCopy $source $destination /S /Y 
+				    $fileElement =  "{0}<file src=""{1}"" target=""{2}""/>" -f
+					$fileElement, $source, $destination					
 				 }			 
 			}			 
 		 }
+		 
 		 $packageContentPath = ".\Content" + $packageName
 		 if(Test-Path $packageContentPath)
 		 {
@@ -204,8 +200,23 @@ function Invoke-Packit
 			 mkdir $toolsPath
 			 $packageToolsPath += "\*.*"
 			 copy $packageToolsPath $toolsPath
-		 }		 
-		 
+		 }
+		 if($fileElement -ne "")
+		 {
+		    $filesNode.set_InnerXML($fileElement)
+			$nuGetSpecContent.package.AppendChild($filesNode)			
+		 }
+		$writerSettings = new-object System.Xml.XmlWriterSettings
+  		$writerSettings.OmitXmlDeclaration = $true
+  		$writerSettings.NewLineOnAttributes = $true
+ 		$writerSettings.Indent = $true
+		$nuGetSpecFilePath = Resolve-Path -Path $nuGetSpecFile
+  		$writer = [System.Xml.XmlWriter]::Create($nuGetSpecFilePath, $writerSettings)
+
+  		$nuGetSpecContent.WriteTo($writer)
+ 		$writer.Flush()
+  		$writer.Close()
+		
 		 &$script:packit.nugetCommand  pack $nuGetSpecFile -OutputDirectory $script:packit.packageOutPutDir -Verbose
 		 
 		 if($script:packit.push_to_nuget){ PushPackage($packName) }
