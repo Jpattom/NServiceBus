@@ -75,7 +75,9 @@ function Invoke-Packit
 			 [Parameter(Position=2,Mandatory=0)]
     		 [System.Collections.Hashtable]$dependencies = @{},
 			 [Parameter(Position=3, Mandatory=0)]
-			 [System.Collections.ArrayList]$assemblyNames  
+			 [System.Collections.ArrayList]$assemblyNames,  
+			 [Parameter(Position=4, Mandatory=0)]
+			 [System.Collections.Hashtable]$files = @{}
   		)
 		
 	begin
@@ -141,22 +143,22 @@ function Invoke-Packit
 		$dependencyInnerXml = ""
 		if($dependencies.Count -gt 0)
 		{
-		   $dependencies |  Foreach-Object {
- 		   $p = $_
-    		@($p.GetEnumerator()) | Where-Object {            
-        	($_.Value | Out-String) 
-    		} | Foreach-Object {
-			 $dependencyPackage = $_.Key
-			 $dependencyPackageVersion = $_.Value
-			 if($dependencyPackageVersion -eq $VesionPlaceHolder)
-			 {
-			 	$dependencyPackageVersion = $version
-			 }
-			 $dependencyInnerXml = "{0}<dependency id=""{1}"" version=""{2}"" />" -f 
-        	 $dependencyInnerXml,$dependencyPackage,$dependencyPackageVersion
-    		}
+			$dependencies |  Foreach-Object {
+				$p = $_
+				@($p.GetEnumerator()) | Where-Object {            
+					($_.Value | Out-String) 
+				} | Foreach-Object {
+					$dependencyPackage = $_.Key
+					$dependencyPackageVersion = $_.Value
+					if($dependencyPackageVersion -eq $VesionPlaceHolder)
+					{
+						$dependencyPackageVersion = $version
+					}
+					$dependencyInnerXml = "{0}<dependency id=""{1}"" version=""{2}"" />" -f 
+					$dependencyInnerXml,$dependencyPackage,$dependencyPackageVersion
+				}
 			}
-	       $nuGetSpecContent.package.metadata.dependencies.set_InnerXML($dependencyInnerXml)
+			$nuGetSpecContent.package.metadata.dependencies.set_InnerXML($dependencyInnerXml)
 		}
 		else
 		{
@@ -166,41 +168,60 @@ function Invoke-Packit
 		$fileElement = ""
 		 if($assemblyNames.Count -gt 0)
 		 {
-			 $libPath = "\lib"
+			 $libPath = "lib"
 		 	 foreach ($assemblyName in $assemblyNames)
 			 {
-				 foreach($framework in $script:packit.targeted_Frameworks)
+			 	 if($assemblyName -ne "")
 				 {
-				 	$source = $script:packit.framework_Isolated_Binaries_Loc + "\" + $framework + "\" + $assemblyName
-					$source = Resolve-Path $source
-					$destination =  $libPath + "\" + $framework +"\"
-					$directoryName  = [system.io.Path]::GetDirectoryName($assemblyName)
-					if($directoryName -ne "")
-					{
-						$destination +=  $directoryName + "\"
-					}
-				    $fileElement =  "{0}<file src=""{1}"" target=""{2}""/>" -f
-					$fileElement, $source, $destination					
-				 }			 
+					 foreach($framework in $script:packit.targeted_Frameworks)
+					 {
+					 	$source = $script:packit.framework_Isolated_Binaries_Loc + "\" + $framework + "\" + $assemblyName
+						$source = Resolve-Path $source
+						$destination =  $libPath + "\" + $framework +"\"
+						$directoryName  = [system.io.Path]::GetDirectoryName($assemblyName)
+						if($directoryName -ne "")
+						{
+							$destination +=  $directoryName + "\"
+						}
+					    $fileElement =  "{0}<file src=""{1}"" target=""{2}""/>" -f
+						$fileElement, $source, $destination					
+					 }
+				 }
 			}			 
 		 }
 		 
-		 $packageContentPath = ".\Content" + $packageName
-		 if(Test-Path $packageContentPath)
+		 if($files.Count -gt 0)
 		 {
-			 $contentPath = $packageDir + "\Content"
-			 mkdir $contentPath
-			 $packageContentPath += "\*.*"
-			 copy $packageContentPath $contentPath
-		 }
-		 $packageToolsPath = ".\Tools" + $packageName
-		 if(Test-Path $packageToolsPath)
-		 {
-			 $toolsPath = $packageDir + "\tools"
-			 mkdir $toolsPath
-			 $packageToolsPath += "\*.*"
-			 copy $packageToolsPath $toolsPath
-		 }
+			$files.Keys |  Foreach-Object {
+					$srcResolved = Resolve-Path $_		
+					$target = $files[$_]
+					foreach($src in $srcResolved)
+					{
+						$fileElement = "{0}<file src=""{1}"" target=""{2}""/>" -f
+						$fileElement,  $src, $target
+					}
+				}
+			}			
+		 
+#		 $packageContentPath = ".\Content" + $packageName
+#		 if(Test-Path $packageContentPath)
+#		 {
+#			 $contentPath = $packageDir + "\Content"
+#			 mkdir $contentPath
+#			 $packageContentPath += "\*.*"
+#			 copy $packageContentPath $contentPath
+#		 }
+#		 $packageToolsPath = ".\Tools" + $packageName
+#		 if(Test-Path $packageToolsPath)
+#		 {
+#			 $toolsPath = $packageDir + "\tools"
+#			 mkdir $toolsPath
+#			 $packageToolsPath += "\*.*"
+#			 copy $packageToolsPath $toolsPath
+#		 }
+
+
+
 		 if($fileElement -ne "")
 		 {
 		    $filesNode.set_InnerXML($fileElement)

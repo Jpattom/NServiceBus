@@ -22,7 +22,7 @@ task CreatePackage -depends  BuildOnNet35, BuildOnNet40  {
 	
 	#region Packing NServiceBus.Tools
 	$packit.package_description = "The tools for configure the nservicebus, The most popular open-source service bus for .net"
-	invoke-packit "NServiceBus.Tools" "" 
+	invoke-packit "NServiceBus.Tools" "" @{} "" @{".\tools\msmqutils\*.*"="tools\msmqutils";".\tools\RunMeFirst.bat"="tools";".\tools\install.ps1"="tools"}
 	#endregion
 	
 	#region Packing NServiceBus.ObjectBuilder.Autofac2
