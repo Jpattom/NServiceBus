@@ -27,6 +27,27 @@ Export-ModuleMember -Variable "packit"
 
 $VesionPlaceHolder = "<version>"
 
+function DeletePackage($packageId , $ver )
+{
+	$keyfile = resolve-path $script:packit.nugetKey
+	$nugetExcec =  resolve-path $script:packit.nugetCommand
+	
+	if(-not (test-path $keyfile)) 
+	{
+  		throw "Could not find the NuGet access key at $keyfile."
+	}
+	
+	$key = get-content $keyfile
+	$key = $key.Trim()
+	
+	write-host "Package to Delete:"
+	Write-Host $packageId + $ver
+	&$nugetExcec delete $packageId $ver $key 
+	write-host ""    
+}
+
+Export-ModuleMember -Function "DeletePackage"
+
 function PushPackage($packageName)
 {
 	$keyfile = resolve-path $script:packit.nugetKey
@@ -77,7 +98,9 @@ function Invoke-Packit
 			 [Parameter(Position=3, Mandatory=0)]
 			 [System.Collections.ArrayList]$assemblyNames,  
 			 [Parameter(Position=4, Mandatory=0)]
-			 [System.Collections.Hashtable]$files = @{}
+			 [System.Collections.Hashtable]$files = @{},
+			 [Parameter(Position=5, Mandatory=0)]
+			 [bool]$createWithSymbol = $false
   		)
 		
 	begin
@@ -237,8 +260,10 @@ function Invoke-Packit
   		$nuGetSpecContent.WriteTo($writer)
  		$writer.Flush()
   		$writer.Close()
+	
 		
-		 &$script:packit.nugetCommand  pack $nuGetSpecFile -OutputDirectory $script:packit.packageOutPutDir -Verbose
+		if($createWithSymbol){&$script:packit.nugetCommand  pack $nuGetSpecFile -OutputDirectory $script:packit.packageOutPutDir -Verbose -Symbols}
+		else{&$script:packit.nugetCommand  pack $nuGetSpecFile -OutputDirectory $script:packit.packageOutPutDir -Verbose}
 		 
 		 if($script:packit.push_to_nuget){ PushPackage($packName) }
 	}
@@ -249,4 +274,3 @@ function Invoke-Packit
 }
 
 Export-ModuleMember -Function "Invoke-Packit"
-
